@@ -385,3 +385,18 @@ EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
 EMAIL_PORT = 465
 EMAIL_USE_TLS = True
 FORMS_DISABLE_SEND_FROM_EMAIL_FIELD = True
+
+
+########
+# KEYS #
+########
+
+try:
+    keys = json.load(open(os.path.expanduser('~/.keys.json')))
+except IOError, ValueError:
+    keys = {}
+
+# Make these unique, and don't share it with anybody.
+SECRET_KEY = keys.get('SECRET_KEY')
+NEVERCACHE_KEY = keys.get('NEVERCACHE_KEY')
+
