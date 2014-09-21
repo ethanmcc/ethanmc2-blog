@@ -407,3 +407,8 @@ except IOError, ValueError:
 SECRET_KEY = keys.get('SECRET_KEY')
 NEVERCACHE_KEY = keys.get('NEVERCACHE_KEY')
 
+########
+# BLOG #
+########
+
+BLOG_SLUG = ''
