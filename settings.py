@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import json
+import os
 
 ######################
 # MEZZANINE SETTINGS #
@@ -166,17 +167,17 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 DATABASES = {
     "default": {
         # Add "postgresql_psycopg2", "mysql", "sqlite3" or "oracle".
-        "ENGINE": "django.db.backends.",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
         # DB name or path to database file if using sqlite3.
-        "NAME": "",
+        "NAME": os.environ.get('RDS_DB_NAME'),
         # Not used with sqlite3.
-        "USER": "",
+        "USER": os.environ.get('RDS_USERNAME'),
         # Not used with sqlite3.
-        "PASSWORD": "",
+        "PASSWORD": os.environ.get('RDS_PASSWORD'),
         # Set to empty string for localhost. Not used with sqlite3.
-        "HOST": "",
+        "HOST": os.environ.get('RDS_HOSTNAME'),
         # Set to empty string for default. Not used with sqlite3.
-        "PORT": "",
+        "PORT": os.environ.get('RDS_PORT'),
     }
 }
 
