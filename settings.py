@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+import json
 
 ######################
 # MEZZANINE SETTINGS #
@@ -88,7 +89,7 @@ USE_SOUTH = True
 # In the format (('Full Name', 'email@example.com'),
 #                ('Full Name', 'anotheremail@example.com'))
 ADMINS = (
-    ('Your Name', 'your_email@domain.com'),
+    ('Ethan McCreadie', 'ethanmcc@gmail.com'),
 )
 MANAGERS = ADMINS
 
@@ -363,3 +364,23 @@ except ImportError:
     pass
 else:
     set_dynamic_settings(globals())
+
+
+##########
+# EMAIL #
+##########
+
+try:
+    credentials = json.load(open(os.path.expanduser('~/.smtp.json')))
+except IOError, ValueError:
+    credentials = {}
+
+EMAIL_FAIL_SILENTLY = False
+DEFAULT_FROM_EMAIL = SERVER_EMAIL = 'ethanmcc@gmail.com'
+EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
+EMAIL_HOST_USER = credentials.get('username')
+EMAIL_HOST_PASSWORD = credentials.get('password')
+EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = True
+FORMS_DISABLE_SEND_FROM_EMAIL_FIELD = True
