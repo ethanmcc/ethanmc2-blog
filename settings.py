@@ -1,5 +1,4 @@
 from __future__ import absolute_import, unicode_literals
-import json
 import os
 
 ######################
@@ -379,34 +378,14 @@ else:
 # EMAIL #
 ##########
 
-try:
-    credentials = json.load(open(os.path.expanduser('~/.smtp.json')))
-except IOError, ValueError:
-    credentials = {}
-
 EMAIL_FAIL_SILENTLY = False
 DEFAULT_FROM_EMAIL = SERVER_EMAIL = 'ethanmcc@gmail.com'
 EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
-EMAIL_HOST_USER = credentials.get('username')
-EMAIL_HOST_PASSWORD = credentials.get('password')
 EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
 EMAIL_PORT = 465
 EMAIL_USE_TLS = True
 FORMS_DISABLE_SEND_FROM_EMAIL_FIELD = True
 
-
-########
-# KEYS #
-########
-
-try:
-    keys = json.load(open(os.path.expanduser('~/.keys.json')))
-except IOError, ValueError:
-    keys = {}
-
-# Make these unique, and don't share it with anybody.
-SECRET_KEY = keys.get('SECRET_KEY')
-NEVERCACHE_KEY = keys.get('NEVERCACHE_KEY')
 
 ########
 # BLOG #
