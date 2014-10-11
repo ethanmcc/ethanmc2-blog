@@ -1,5 +1,4 @@
 from __future__ import absolute_import, unicode_literals
-import os
 
 ######################
 # MEZZANINE SETTINGS #
@@ -392,3 +391,27 @@ FORMS_DISABLE_SEND_FROM_EMAIL_FIELD = True
 ########
 
 BLOG_SLUG = ''
+
+
+###########
+# LOGGING #
+###########
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/opt/python/log/debug.log',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
