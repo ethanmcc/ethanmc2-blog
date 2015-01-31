@@ -55,6 +55,3 @@ target/
 
 .ropeproject
 .idea
-dev.db
-static/
-local_settings.py
