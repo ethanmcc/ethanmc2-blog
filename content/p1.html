@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>Deploy Jenkins Server on Elastic Beanstalk</title>
+    <meta name="tags" content="elastic beanstalk, aws, jenkins, continuous integration" />
+    <meta name="date" content="2014-09-21 15:11" />
+    <meta name="modified" content="2012-09-22 20:14" />
+    <meta name="category" content="aws" />
+  </head>
+  <body>
+    <p>You can deploy to Elastic Beanstalk without using Jenkins a continuous integration server. You could even run your tests automatically before deploy if you added a <a target="_blank" href="http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-containers-ec2.html#customize-containers-format-container_commands">container command</a>. I like Jenkins, though, and my team is comfortable looking in one place for test output and deploy schedules. Plus, I think launching Java .war files show off ElasticBeanstalk pretty nicely. Thanks, Java, for having a standard structure for deploying web applications.</p>
+    <p>You can deploy Jenkins directly to Elastic Beanstalk as a .war file. Unfortunately, without the git package installed on your server, you won't be able to trigger builds from your Git repo. If you setup an <a target="_blank" href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html">EC2 key pair</a> and associate it with your instance, you can add system packages as needed, which will let you use git with an unmodified .war file. But I like the idea of never having to SSH into an Elastic Beanstalk instance. In order to use git with Jenkins without SSH-ing in to customize the EC2 instance, we're going to need to modify the Jenkins .war file.</p>
+    <h3>Create a Custom .war File</h3>
+    <p>For starters, head over to <a target="_blank" href="http://jenkins-ci.org/">http://jenkins-ci.org/</a> and download the latest version of Jenkins. Then:</p>
+    <pre>unzip jenkins.war -d jenkins<br>cd jenkins<br>mkdir .ebextensions<br>vim .ebextensions/jenkins.config</pre>
+    <p><span>Files in the .ebextensions directory contain Elastic Beanstalk configuration. There's </span><a target="_blank" href="http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-containers-ec2.html">good documentation available</a><span> for the .ebextensions options. In this case, all we need is the git-core package. To make sure that's installed on a yum-based system, the following .ebextensions/jenkins.config (you can call it whatever you'd like) file should work:</span></p>
+    <pre>packages:<br>  yum:<br>    git: []</pre>
+    <p>Once you've created that file, all you need to do is repackage the .war file, making sure to include the .ebextensions folder:</p>
+    <pre>jar -cvf ../eb-jenkins.war * .ebextensions </pre>
+    <h3>Create an Elastic Beanstalk Application</h3>
+    <p>Now head to the Elastic Beanstalk console and select "Create New Application". Call it "jenkins" and set the description to "Jenkins Continuous Integration", or whatever names suit you. Choose Web Server for the tier, Tomcat for the predefined configuration, and single-instance for the environment type. Jenkins scales by adding slave instances, not by load-balancing the master. Then select "Upload your own" and locate the eb-jenkins.war you create in the previous step, and click Next.</p>
+    <h3>Create an Elastic Beanstalk Environment</h3>
+    <p>Elastic Beanstalk environment names are must be unique across Amazon. You'll want to choose a more specific name than "jenkins" here. Once you've found a unique name, Elastic Beanstalk will ask if you need an RDS instance or a VPC. Jenkins uses its own XML-based database, so you won't need RDS. If you have a VPC configured, this would be a good spot to use it, but it's not necessary at this time. Leave both boxes unchecked and go to the next screen.</p>
+    <p>For the instance type, you'll need at least a t2.small according to <a target="_blank" href="http://oppspace-dev.blogspot.com/2013/11/github-jenkins-and-grails-on-amazon.html">this post</a>. You won't need an EC2 key pair at this time, but feel free to use one if you have it. Enter your email address to get notifications on the stack, and proceed with the default instance role and storage settings. Click next, and then next again on the Environment Tags page. Then, review your settings and click Launch.</p>
+    <h3>Secure Jenkins</h3>
+    <p>If your Jenkins instance is not running in a VPC, you'll want to secure it right away. Select "Manage Jenkins" from the home menu, then click Configure Global Security. For Security Realm, choose Jenkins User Database and make sure "Allow users to sign up" is checked, then create an account for yourself. Then, update the Authorization setting to "Logged-in Users can do anything". Now, disable the "Allow users to sign up" checkbox. Your job results are now visible to the public, but job and system configuration are only visible when you're logged in. Adjust this as needed, especially before putting any sensitive data here, or move Jenkins into a private network.</p>
+    <p></p>
+    <h3>Install Git Plugin</h3>
+    <p>Under "Manage Jenkins", select "Manage Plugins", then click on the Available tab and search for git. Several options will come up. I'm happy with the GIT plugin and the GIT client plugin. Select those two, then click "Download now and install after restart". Now you're ready to start using Jenkins with git projects.</p>
+    <p> </p>
+  </body>
+</html>
