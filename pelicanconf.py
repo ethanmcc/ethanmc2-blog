@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 AUTHOR = u'Ethan McCreadie'
 SITENAME = u'Ethan McCreadie'
-SITEURL = ''
+SITEURL = u'http://localhost:8000'
 
 PATH = 'content'
 
@@ -18,6 +18,7 @@ CATEGORY_FEED_ATOM = None
 TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
+TWITTER_USERNAME = 'ethanmc2'
 
 # Blogroll
 # LINKS = (('Pelican', 'http://getpelican.com/'),
@@ -26,7 +27,7 @@ AUTHOR_FEED_RSS = None
 #          ('You can modify those links in your config file', '#'),)
 
 # Social widget
-# SOCIAL = (('You can add links in your config file', '#'),
+SOCIAL = (('@ethanmc2', 'http://twitter.com/ethanmc2'),)
 #           ('Another social link', '#'),)
 
 DEFAULT_PAGINATION = 10
