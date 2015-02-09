@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <title>Install Jenkins Plugins</title>
+    <meta name="tags" content="elastic beanstalk, aws, jenkins, continuous integration" />
+    <meta name="date" content="2014-09-22 03:01" />
+    <meta name="category" content="aws" />
+  </head>
+  <body>
+    <p>Now that <a target="_blank" class="internal" href="/deploy-jenkins-server-on-elastic-beanstalk.html">you have Jenkins installed</a>, it's relatively painless to run tests against git builds and deploy to Elastic Beanstalk. To do this sanely, you'll want:</p>
+    <ol>
+    <li><a target="_blank" class="external" href="https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin">Jenkins Git Plugin</a> or another version control plugin</li>
+    <li><a target="_blank" class="external" href="https://wiki.jenkins-ci.org/display/JENKINS/AWSEB+Deployment+Plugin">Jenkins AWSEB Deployment Plugin</a></li>
+    </ol>
+    <h3>Create a Deployment Bucket</h3>
+    <p>I prefer to have a separate bucket for all my deployments, and organize different deploys by key. The AWSEB plugin makes that simple by requiring an S3 Bucet Prefix option, which I typically just set to the app name, appending the environment (-dev, -qa, -etc.) if it's not production. You can use the CLI tool to create a bucket, or generate one using the AWS web console. You'll need a unique name across all of S3, so plan on including part of your username. For example:</p>
+    <pre>aws s3 mb s3://pecosbill-deployment</pre>
+    <p>Once your bucket is created, you'll need a Jenkins user, and a policy that allows that user to access the bucket.</p>
+    <h3>Create Jenkins User</h3>
+    <p>Create a Jenkins IAM user. I found it helpful to use the web interface for the first handful of roles, so you can do a sanity check after attaching policies. There are policy generators and IAM simulators that help you lock everything down.</p>
+    <h3>IAM User Policy</h3>
+    <p>I'm a fan of using encrypted S3 buckets to store and deploy sensitive information (more on this soon). Because of that, I want to make sure any buckets I use for those credentials are not accessible by the Jenkins user. This is easily done if your deploys go to one bucket and your credentials go to another. Below is a simple user policy that blocks all s3 access to name-of-credential-bucket, and allows it for everything else. <span style="">Attach this policy to the IAM user you just created, making sure to modify the bucket names you wish to secure:</span></p>
+    <pre>{<br>  "Version": "2012-10-17",<br>  "Statement": [<br>    {<br>      "Effect": "Deny",<br>      "Action": "s3:*",<br>      "Resource": [<br>        "arn:aws:s3:::name-of-credential-bucket/*",<br>        "arn:aws:s3:::name-of-credential-bucket"<br>      ]<br>    },<br>    {<br>      "Effect": "Allow",<br>      "Action": [<br>        "elasticbeanstalk:*",<br>        "ec2:*",<br>        "elasticloadbalancing:*",<br>        "autoscaling:*",<br>        "cloudwatch:*",<br>        "s3:*",<br>        "sns:*",<br>        "cloudformation:*",<br>        "rds:*",<br>        "sqs:*",<br>        "iam:PassRole"<br>      ],<br>      "Resource": "*"<br>    }<br>  ]<br>}</pre>
+    <p>It's important to have both the base bucket name, and the bucket name followed by '/*' in order to stop access to the entire bucket. <span style="">You could use a bucket policy instead here, but I find user- and role-based policies more manageable.</span></p>
+    <h3>IAM Credentials</h3>
+    <p>Once your user is created, and the security policy is in place, generate credentials for your IAM user. You'll enter access key ID and secret access key into your Jenkins job configuration. You can do this from the IAM &gt; Users panel of the AWS console, but it's faster through the <a target="_blank" class="external" href="http://aws.amazon.com/cli/">AWS CLI tool</a>, which can be installed quickly with:</p>
+    <pre>pip install awscli</pre>
+    <p>Once the CLI tool is installed and configured, go ahead and <a target="_blank" class="external" href="http://docs.aws.amazon.com/cli/latest/userguide/cli-iam-create-creds.html">generate your credentials</a>:</p>
+    <pre class="programlisting">aws iam create-access-key --user-name MyUser</pre>
+    <p class="programlisting">Make sure to store the credentials this command returns somewhere safe. <a target="_blank" class="external" href="https://agilebits.com/onepassword">1Password</a> is a good solution, and I'm sure there are plenty of others.</p>
+    <h3 class="programlisting">Configure Deploy into Elastic Beanstalk</h3>
+    <p>Now everything is ready to create a deploy job. Create your Jenkins job as normal, and after your tests, add an additional build step "Deploy into Elastic Beanstalk".</p>
+    <table border="0">
+    <tbody>
+    <tr>
+    <td>AWS Access Key Id</td>
+    <td>&lt;shorter string from IAM credentials&gt;</td>
+    </tr>
+    <tr>
+    <td>AWS Shared Secret Key</td>
+    <td>&lt;longer string from IAM credentials&gt;</td>
+    </tr>
+    <tr>
+    <td>AWS Region</td>
+    <td>us-east-1 <em>(or whatever your region is)</em></td>
+    </tr>
+    <tr>
+    <td>Application Name</td>
+    <td>&lt;your-elastic-beanstalk-app-name&gt;</td>
+    </tr>
+    <tr>
+    <td>S3 Bucket Name</td>
+    <td>&lt;your-deployment-bucket-name&gt;</td>
+    </tr>
+    <tr>
+    <td>S3 Key Prefix</td>
+    <td>&lt;app-name&gt; <em>(or whatever you like)</em></td>
+    </tr>
+    <tr>
+    <td>Root Object (File / Directory)</td>
+    <td>. <em>(assuming you're using the git plugin and packaging your whole checkout)</em></td>
+    </tr>
+    <tr>
+    <td>Includes</td>
+    <td></td>
+    </tr>
+    <tr>
+    <td>Excludes</td>
+    <td>.git/**/*,.tox/**/* <em>(depends on your app)</em></td>
+    </tr>
+    <tr>
+    <td>Version Label Format</td>
+    <td>${BUILD_ID}</td>
+    </tr>
+    <tr>
+    <td>Environment Name</td>
+    <td>&lt;your-elastic-beanstalk-environment-name&gt;</td>
+    </tr>
+    </tbody>
+    </table>
+    <p></p>
+    <p>Now save the Jenkins job, and give it a run. Hopefully, the Jenkins job will succeed and then you'll see your application start to deploy in the Elastic Beanstalk console.</p>
+  </body>
+</html>
